@@ -54,7 +54,7 @@ import { UserBlocksModule } from './user-blocks/user-blocks.module';
       fieldResolverEnhancers: ['guards'],
     }),
     ConfigModule.forRoot({
-      ignoreEnvFile: true,
+      ignoreEnvFile: false,
       load: [configuration],
     }),
     PermissionsModule,
