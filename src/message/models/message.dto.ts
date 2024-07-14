@@ -16,6 +16,18 @@ registerEnumType(GifType, {
   name: 'GifType',
 });
 
+export enum TagType {
+  subTopic = 'subTopic',
+}
+
+export class MessageTag {
+  @Field(() => String, { nullable: false })
+  id: string;
+
+  @Field(() => TagType, { nullable: false })
+  type: TagType;
+}
+
 @InputType()
 export class ReplyMessageDto {
   @Field()
@@ -170,6 +182,18 @@ export class ReactionDto {
 
   @Field(() => String)
   reactionUnicode: string;
+
+  @Field(() => ObjectID)
+  messageId: ObjectID;
+
+  @Field(() => ObjectID)
+  conversationId: ObjectID;
+}
+
+@InputType()
+export class TagMessageDto {
+  @Field(() => String)
+  tagId: string;
 
   @Field(() => ObjectID)
   messageId: ObjectID;

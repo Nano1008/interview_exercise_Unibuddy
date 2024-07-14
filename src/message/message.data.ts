@@ -7,7 +7,7 @@ import {
   ChatMessageModel,
 } from './models/message.model';
 import { ChatMessage, PaginatedChatMessages } from './models/message.entity';
-import { MessageDto, GetMessageDto } from './models/message.dto';
+import { MessageDto, GetMessageDto, MessageTag } from "./models/message.dto";
 import { ObjectID } from 'mongodb';
 import { createRichContent } from './utils/message.helper';
 import { MessageGroupedByConversationOutput } from '../conversation/models/messagesFilterInput';
@@ -365,5 +365,33 @@ export class MessageData {
     }
 
     return chatMessageToObject(updatedResult);
+  }
+
+  async addTag(
+    messageId: ObjectID,
+    tag: MessageTag,
+  ): Promise<ChatMessageModel> {
+    const updatedMessage = await this.chatMessageModel.findOneAndUpdate(
+      { _id: messageId },
+      { $addToSet: { tags: tag } },
+      {
+        new: true,
+      },
+    );
+    if (!updatedMessage) throw new Error('The message to tag does not exist');
+    return chatMessageToObject(updatedMessage);
+  }
+
+  async getMessagesByTag(tag: MessageTag): Promise<ChatMessage[]> {
+    const query = {
+      tags: {
+        $elemMatch: {
+          id: tag.id,
+          type: tag.type,
+        },
+      }
+    }
+    const messages = await this.chatMessageModel.find(query);
+    return messages.map((message) => chatMessageToObject(message));
   }
 }

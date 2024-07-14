@@ -2,10 +2,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectID } from 'mongodb';
 import { MessageData } from './message.data';
-import { ChatMessageModel, ChatMessageSchema } from './models/message.model';
+import { ChatMessageModel, ChatMessageSchema} from './models/message.model';
 
 import { ConfigManagerModule } from '../configuration/configuration-manager.module';
 import {getTestConfiguration}  from '../configuration/configuration-manager.utils';
+import { MessageTag, TagType } from "./models/message.dto";
 
 const id = new ObjectID('5fe0cce861c8ea54018385af');
 const conversationId = new ObjectID();
@@ -124,4 +125,72 @@ describe('MessageData', () => {
       expect(deletedMessage.deleted).toEqual(true);
     });
   });
+
+  describe('tag', () => {
+    it('successfully tags a message', async () => {
+      const conversationId = new ObjectID();
+      const message = await messageData.create(
+        { conversationId, text: 'Message to tag' },
+        senderId,
+      );
+      const tag = new MessageTag();
+      tag.id = 'tag1';
+      tag.type = TagType.subTopic;
+      const taggedMessage = await messageData.addTag(
+        new ObjectID(message.id),
+        tag,
+      );
+
+      expect(taggedMessage.tags).toEqual([expect.objectContaining(tag)]);
+    });
+  });
+
+  describe('get', () => {
+    it('successfully gets messages by tag', async () => {
+      const conversationId = new ObjectID();
+      const sentMessage = await messageData.create(
+        { conversationId, text: 'Hello world' },
+        senderId,
+      );
+
+      const tag = new MessageTag();
+      tag.id = 'tag';
+      tag.type = TagType.subTopic;
+      const newMessage = await messageData.addTag(new ObjectID(sentMessage.id), tag);
+
+      const gotMessages = await messageData.getMessagesByTag(tag);
+      expect(gotMessages).toEqual([newMessage]);
+    });
+  });
+
+  describe('reaction', () => {
+    it('successfully adds a reaction to a message', async () => {
+      const conversationId = new ObjectID();
+      const message = await messageData.create(
+        { conversationId, text: 'Message to react to' },
+        senderId,
+      );
+
+      const reaction = 'like';
+      const reactionUnicode = '👍';
+      const updatedMessage = await messageData.addReaction(
+        reaction,
+        senderId,
+        reactionUnicode,
+        new ObjectID(message.id),
+      );
+
+      expect(updatedMessage.reactions).toEqual(
+        [
+          expect.objectContaining({
+            reaction,
+            reactionUnicode,
+            userIds: [senderId.toHexString()],
+          }),
+        ]
+      );
+    });
+  });
+
+
 });
